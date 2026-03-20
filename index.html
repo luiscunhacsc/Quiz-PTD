@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Preparação: Psicologia na Era Digital</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --primary-dark: #2f6faf;
+            --background: #F4F7F6;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-light: #777777;
+            --btn-sim: #2ECC71;
+            --btn-parte: #F39C12;
+            --btn-nao: #E74C3C;
+            --success-soft: #eaf9f0;
+            --info-soft: #eef6ff;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            height: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 20px;
+            display: none;
+            font-weight: bold;
+        }
+
+        /* Screens */
+        #start-screen, #result-screen, #review-screen {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        h1 { color: var(--primary); margin-top: 0; }
+        p { line-height: 1.6; font-size: 1.1rem;}
+
+        button.primary-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.1s;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        button.primary-btn:hover { background-color: #357ABD; }
+        button.primary-btn:active { transform: scale(0.98); }
+
+        /* Card Flip Animation & Styles */
+        .scene {
+            width: 100%;
+            perspective: 1000px;
+            display: none;
+            margin-bottom: 30px;
+        }
+        .card {
+            width: 100%;
+            min-height: 350px;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+        .card.is-flipped { transform: rotateY(180deg); cursor: default; }
+
+        .card__face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+        .card__face--front { font-size: 1.3rem; font-weight: 600; color: var(--primary); }
+        .card__face--back {
+            transform: rotateY(180deg);
+            font-size: 1rem;
+            text-align: left;
+            overflow-y: auto;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+        
+        .card__face--back strong { color: var(--primary); background-color: rgba(74, 144, 226, 0.1); padding: 0 4px; border-radius: 4px;}
+
+        .flip-hint {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: auto;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Assessment Buttons */
+        .assessment-container {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .assessment-container h3 { margin: 0; font-size: 1.2rem; color: var(--text-main); }
+        .btn-group { display: flex; gap: 10px; justify-content: center; }
+        .eval-btn {
+            border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s; color: white; flex: 1;
+        }
+        .eval-btn:active { transform: scale(0.95); }
+        .eval-btn:hover { opacity: 0.9; }
+        .btn-sim { background-color: var(--btn-sim); }
+        .btn-parte { background-color: var(--btn-parte); }
+        .btn-nao { background-color: var(--btn-nao); }
+
+        /* Result styling */
+        .score-display { font-size: 4rem; font-weight: bold; color: var(--primary); margin: 20px 0; }
+
+        .result-actions, .review-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .ghost-btn {
+            background-color: #fff;
+            color: var(--primary);
+            border: 1px solid #bed9f8;
+            padding: 14px 24px;
+            font-size: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .ghost-btn:hover {
+            background-color: #f3f9ff;
+            border-color: var(--primary);
+        }
+
+        .review-callout {
+            margin-top: 12px;
+            background: linear-gradient(135deg, #eef6ff 0%, #f9fcff 100%);
+            border: 1px solid #cbe1f8;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+            box-shadow: 0 8px 18px rgba(74, 144, 226, 0.12);
+        }
+        .review-counter {
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1e5f9f;
+            background: #fff;
+            border: 1px solid #d6e8fb;
+            border-radius: 999px;
+            padding: 6px 12px;
+            margin-bottom: 10px;
+        }
+        .review-callout p {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #244766;
+        }
+        .review-cta-btn {
+            width: 100%;
+        }
+
+        .clean-sheet {
+            margin-top: 12px;
+            background: var(--success-soft);
+            border: 1px solid #c6e9d6;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: left;
+        }
+        .clean-sheet p {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #1f5e3f;
+        }
+
+        #review-screen {
+            display: none;
+            animation: fade-up 0.35s ease;
+        }
+        .review-subtitle {
+            margin-top: 0;
+            margin-bottom: 18px;
+            font-size: 1rem;
+            color: #345f86;
+        }
+        .review-list {
+            display: grid;
+            gap: 14px;
+            max-height: 52vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .review-card {
+            background: #fcfeff;
+            border: 1px solid #d6e7fb;
+            border-left: 5px solid var(--primary);
+            border-radius: 14px;
+            padding: 16px;
+            text-align: left;
+            box-shadow: 0 6px 14px rgba(74, 144, 226, 0.08);
+        }
+        .review-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .review-index {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #285d92;
+        }
+        .review-pill {
+            display: inline-block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            font-weight: 700;
+            color: #774f0b;
+            background: #fff3d8;
+            border: 1px solid #f2d18d;
+            border-radius: 999px;
+            padding: 4px 10px;
+        }
+        .review-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.05rem;
+            color: var(--text-main);
+        }
+        .review-card p {
+            margin: 0;
+            font-size: 0.97rem;
+            line-height: 1.55;
+            color: #2e2e2e;
+        }
+        .review-note {
+            margin-top: 12px !important;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--info-soft);
+            border: 1px solid #cee3fb;
+            color: #205589 !important;
+            font-weight: 600;
+        }
+
+        @keyframes fade-up {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .card__face { padding: 25px; }
+            .btn-group { flex-direction: column; }
+            #start-screen, #result-screen, #review-screen { padding: 28px 22px; }
+            .result-actions, .review-actions { flex-direction: column; }
+            .review-list { max-height: none; }
+            button.primary-btn, .ghost-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="start-screen">
+        <h1>Preparação para o Teste</h1>
+        <p>Este simulador contém 10 perguntas selecionadas aleatoriamente. O objetivo é leres a pergunta, tentares recordar a resposta e, em seguida, virares o cartão.</p>
+        <p>Sê honesto(a) na tua autoavaliação! No final, receberás uma nota de 0 a 20.</p>
+        <button class="primary-btn" onclick="startQuiz()">Começar Estudo</button>
+    </div>
+
+    <div class="progress-text" id="progress-text">Pergunta 1 de 10</div>
+    <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="scene" id="card-scene">
+        <div class="card" id="flashcard" onclick="flipCard()">
+            <div class="card__face card__face--front">
+                <p id="question-text">Carregando pergunta...</p>
+                <div class="flip-hint">Toca no cartão para ver a resposta</div>
+            </div>
+            <div class="card__face card__face--back">
+                <p id="answer-text">Carregando resposta...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="assessment-container" id="assessment-ui">
+        <h3>Já sabias a resposta?</h3>
+        <div class="btn-group">
+            <button class="eval-btn btn-sim" onclick="recordAnswer(2)">Sim (Sabia tudo)</button>
+            <button class="eval-btn btn-parte" onclick="recordAnswer(1)">Em parte (Faltaram detalhes)</button>
+            <button class="eval-btn btn-nao" onclick="recordAnswer(0)">Não (Preciso rever)</button>
+        </div>
+    </div>
+
+    <div id="result-screen" style="display: none;">
+        <h1>Resultado Final</h1>
+        <div class="score-display"><span id="final-score">0</span> / 20</div>
+        <p id="feedback-message"></p>
+
+        <div class="review-callout" id="review-callout" style="display: none;">
+            <span class="review-counter" id="review-count">0 questoes para rever</span>
+            <p id="review-message">Cada revisao agora reduz o esforco no proximo teste.</p>
+            <button class="primary-btn review-cta-btn" onclick="openReview()">Rever questoes para reforcar</button>
+        </div>
+
+        <div class="clean-sheet" id="clean-sheet" style="display: none;">
+            <p><strong>Excelente consistencia.</strong> Disseste que sabias todas as questoes. Mantem este ritmo e repete com novo conjunto para consolidar ainda mais.</p>
+        </div>
+
+        <div class="result-actions">
+            <button class="ghost-btn" onclick="startQuiz()">Fazer Novo Teste (Novas Perguntas)</button>
+        </div>
+    </div>
+
+    <div id="review-screen">
+        <h1>Revisao para Reforco</h1>
+        <p class="review-subtitle" id="review-subtitle"></p>
+        <div class="review-list" id="review-list"></div>
+        <div class="review-actions">
+            <button class="ghost-btn" onclick="backToResults()">Voltar ao resultado</button>
+            <button class="primary-btn" onclick="startQuiz()">Novo teste</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Banco de questões com conceitos principais destacados a negrito.
+    const BANK = [
+        { id:1, q:"Como a ética e deontologia são preservadas na era digital?", a:`A preservação da ética e da deontologia na era digital é garantida pela criação e aplicação de <strong>normas e diretrizes</strong> que assegurem o respeito pela privacidade, pela <strong>proteção de dados</strong> e pelos direitos dos utilizadores. Os psicólogos devem integrar estes princípios desde a recolha de dados até à intervenção. É importante garantir que as intervenções digitais sigam princípios de <strong>confidencialidade e consentimento informado</strong>, salvaguardando a dignidade e o bem-estar dos indivíduos.` },
+        { id:2, q:"Como a Psicologia aborda os fatores humanos em sistemas digitais?", a:`A Psicologia dos fatores humanos estuda como os indivíduos interagem com sistemas digitais para otimizar a <strong>usabilidade, a acessibilidade e a satisfação do utilizador</strong>. Considera as <strong>limitações cognitivas e emocionais</strong>, ajudando a desenvolver sistemas intuitivos. Psicólogos colaboram com designers para criar interfaces que minimizem a frustração e reduzam o <strong>stress tecnológico</strong>.` },
+        { id:3, q:"Como a Psicologia contribui para a análise de arquiteturas digitais?", a:`Estuda como os <strong>elementos de design</strong> das plataformas influenciam o comportamento. Analisa a usabilidade, a experiência do utilizador e as <strong>estratégias persuasivas</strong> que podem induzir <strong>dependência digital</strong> ou compulsão. Pode orientar o desenvolvimento de interfaces que respeitem a <strong>autonomia dos utilizadores</strong> e previnam a manipulação e o vício.` },
+        { id:4, q:"Como a Psicologia pode ajudar a combater o efeito de desinibição online e a promover civismo digital?", a:`O efeito de desinibição online resulta frequentemente em agressividade ou <strong>discurso de ódio</strong>. A Psicologia ajuda a combater este fenómeno promovendo <strong>programas de sensibilização</strong> para o <strong>civismo digital</strong>, respeito e empatia. O ensino de <strong>competências emocionais e comportamentos pró-sociais</strong> reduz comportamentos agressivos.` },
+        { id:5, q:"Como a Psicologia pode ajudar a educar crianças sobre a navegação segura na internet?", a:`Desenvolvendo programas focados em <strong>competências de literacia digital</strong> (verificação de informações, proteção de dados e identificação de riscos como o <strong>cyberbullying</strong>). Ensinar <strong>regulação emocional e tomada de decisões conscientes</strong> ajuda as crianças a responder a situações de risco e promove o <strong>autocontrolo</strong> no ambiente digital.` },
+        { id:6, q:"Como a Psicologia pode ajudar a otimizar o teletrabalho?", a:`Estudando os fatores que afetam a <strong>produtividade e o bem-estar</strong> (gestão de tempo, distração, fronteira entre trabalho/vida pessoal). Oferece <strong>estratégias de gestão de tempo</strong> e ferramentas de <strong>regulação emocional</strong> para lidar com o stress e o isolamento, promovendo o <strong>equilíbrio trabalho/vida pessoal</strong>.` },
+        { id:7, q:"Como a Psicologia pode auxiliar na promoção da cidadania digital?", a:`Fomentando comportamentos <strong>éticos e responsáveis</strong>. Incentiva programas que promovam a empatia e a participação cívica. Ensina <strong>competências socioemocionais</strong> (regulação emocional, comunicação não agressiva) essenciais para interações saudáveis, fundamentais no combate ao <strong>trolling e cyberbullying</strong>.` },
+        { id:8, q:"Como a Psicologia pode contribuir para a ciberresiliência dos cidadãos?", a:`A ciberresiliência é a capacidade de lidar com ameaças digitais. A Psicologia promove-a ensinando <strong>pensamento crítico</strong> e desenvolvendo <strong>estratégias de coping</strong>. Programas de <strong>literacia digital e cibersegurança</strong> capacitam os cidadãos a agir de forma consciente e segura perante incidentes cibernéticos.` },
+        { id:9, q:"Como a Psicologia pode influenciar o desenvolvimento de algoritmos moralmente responsáveis?", a:`Fornecendo a compreensão de como <strong>preconceitos cognitivos e vieses sociais</strong> são incorporados na IA. Psicólogos colaboram com engenheiros para eliminar <strong>vieses algorítmicos</strong>, garantindo algoritmos <strong>justos e equitativos</strong>, e orientando para a criação de <strong>interfaces transparentes</strong>.` },
+        { id:10, q:"Como a Realidade Virtual pode ser utilizada na formação de psicólogos?", a:`Oferecendo um <strong>ambiente controlado e simulado</strong> para criar cenários clínicos complexos. Permite treinar competências terapêuticas e de diagnóstico <strong>sem riscos para os pacientes</strong>. É útil no treino de intervenções (ex: fobias) com alta <strong>validade ecológica</strong> e segurança na tomada de decisão clínica.` },
+        { id:11, q:"Como a transição digital afeta diferentes culturas?", a:`Pode promover inclusão em algumas culturas, mas <strong>acentuar desigualdades</strong> noutras com acesso limitado. O conteúdo tende a refletir a <strong>cultura dominante</strong>, criando barreiras à preservação de identidades de minorias. Psicólogos ajudam a garantir uma transição digital <strong>inclusiva, diversa e sensível às diferenças culturais</strong>.` },
+        { id:12, q:"Como as fake news influenciam a tomada de decisão e como a Psicologia pode intervir?", a:`Distorcem a perceção ao explorar <strong>preconceitos cognitivos (ex: viés de confirmação)</strong>. A Psicologia intervém promovendo o <strong>pensamento crítico e a verificação de fontes</strong> através de programas de <strong>literacia digital</strong>, ajudando os utilizadores a identificar conteúdos falsos.` },
+        { id:13, q:"Como as tecnologias digitais afetam a saúde mental?", a:`Têm impacto misto: oferecem apoio (terapia online), mas o uso excessivo leva a <strong>ansiedade, depressão e distúrbios do sono</strong>. A <strong>comparação social e exposição constante</strong> nas redes sociais afeta a autoestima e gera isolamento. Psicólogos promovem estratégias de <strong>coping e gestão saudável do tempo online</strong>.` },
+        { id:14, q:"Como as tecnologias digitais influenciam o desenvolvimento infantil?", a:`Promovem <strong>desenvolvimento cognitivo</strong> com recursos educativos, mas o uso excessivo prejudica o <strong>desenvolvimento social e emocional</strong>, causando isolamento e problemas de atenção/sono. A <strong>monitorização e o equilíbrio</strong> no uso são essenciais.` },
+        { id:15, q:"Como as tecnologias podem apoiar o envelhecimento saudável?", a:`Oferecendo ferramentas (monitorização de saúde, socialização online) que promovem a <strong>autonomia, qualidade de vida e bem-estar emocional</strong> dos idosos. Facilitam acesso a cuidados e combatem o isolamento. Psicólogos ajudam a criar tecnologias <strong>personalizadas e fáceis de usar</strong>.` },
+        { id:16, q:"Como as tecnologias podem ser usadas para apoiar indivíduos com perturbações do espectro do autismo?", a:`Oferecem plataformas de comunicação que facilitam a <strong>expressão emocional e socialização</strong>. Aplicações de Realidade Virtual treinam <strong>competências sociais</strong> em ambientes simulados e controlados, ajudando a <strong>reduzir a ansiedade</strong> em situações novas e fomentando a integração social.` },
+        { id:17, q:"Como garantir a gestão ética de dados pessoais?", a:`Aplicando os princípios de <strong>privacidade, transparência e consentimento informado</strong>. Os utilizadores devem compreender como os seus dados são tratados. Psicólogos ajudam a desenhar políticas que respeitam a privacidade, educando para os <strong>direitos digitais (ex: RGPD)</strong>.` },
+        { id:18, q:"Como o Big Data pode ser relevante para a Psicologia?", a:`Permite a análise de <strong>grandes volumes de dados comportamentais</strong>, fornecendo insights sobre padrões sociais e de saúde mental, ajudando a criar <strong>intervenções personalizadas</strong>. No entanto, exige <strong>princípios éticos rigorosos</strong>, como a proteção de dados e o consentimento.` },
+        { id:19, q:"Como os princípios de psicologia comportamental são aplicados na criação de ambientes online viciantes?", a:`Utilizando <strong>reforço intermitente (recompensas imprevisíveis)</strong> e gamificação. Notificações e likes ativam os sistemas de recompensa do cérebro (gerando <strong>dopamina</strong>), criando uma <strong>dependência digital</strong>. A psicologia ajuda a identificar estes padrões e promover uso consciente.` },
+        { id:20, q:"Como os psicólogos podem auxiliar empresas a desenvolver políticas éticas de privacidade de dados?", a:`Garantindo que as práticas respeitem a <strong>autonomia e privacidade</strong> dos utilizadores, identificando práticas invasivas ou manipulativas. Promovem a <strong>transparência e o consentimento informado</strong>, assegurando que o bem-estar dos utilizadores não seja comprometido.` },
+        { id:21, q:"De que forma a Psicologia pode contribuir para o design de intervenções educativas digitais inclusivas?", a:`Aplicando conhecimentos sobre <strong>diversidade cognitiva e comportamental</strong>. Ajuda a criar materiais acessíveis a diferentes <strong>estilos de aprendizagem e necessidades especiais</strong>, promovendo a autonomia dos utilizadores através de intervenções <strong>personalizáveis</strong>.` },
+        { id:22, q:"De que forma a Psicologia pode influenciar políticas públicas na era digital?", a:`Fornecendo <strong>dados científicos</strong> sobre o impacto tecnológico no comportamento. Consultoria para regulamentações que protejam a <strong>privacidade, segurança e equidade</strong>, e criação de programas de <strong>educação digital e literacia</strong>.` },
+        { id:23, q:"De que forma o Big Data influencia a investigação em Psicologia?", a:`Oferece acesso a grandes volumes de dados que permitem análises e identificação de <strong>padrões comportamentais em larga escala</strong>, gerando teorias mais robustas. Levanta, contudo, <strong>questões éticas</strong> relativas à privacidade e proteção de dados.` },
+        { id:24, q:"De que maneira a literacia digital pode ser uma ferramenta de empoderamento social?", a:`Capacitando pessoas para navegar, usar o <strong>pensamento crítico</strong> e avaliar fontes. Promove a <strong>autonomia e inclusão</strong> de grupos marginalizados, permitindo o acesso a oportunidades e diminuindo as desigualdades. Psicólogos desenham programas para <strong>populações vulneráveis</strong>.` },
+        { id:25, q:"De que maneira a transição digital impacta a saúde psicológica?", a:`Impacto duplo: oferece ferramentas de autocuidado (teleterapia), mas gera <strong>stress, sobrecarga de informação e dependência</strong>. Afeta o sono e leva ao <strong>isolamento social</strong>. Psicólogos intervêm para promover o <strong>equilíbrio saudável</strong>.` },
+        { id:26, q:"De que maneira os psicólogos podem colaborar na criação de algoritmos transparentes e justos?", a:`Trazendo a compreensão sobre <strong>preconceitos e vieses sociais</strong> que afetam a tomada de decisão da IA. Garantem que os algoritmos respeitem a <strong>equidade e não discriminação</strong> e promovem o design de <strong>interfaces transparentes</strong>.` },
+        { id:27, q:"O que é resiliência digital e como promovê-la?", a:`É a capacidade de enfrentar <strong>riscos digitais (desinformação, ciberataques)</strong>. Promove-se através do investimento em <strong>literacia digital, regulação emocional e pensamento crítico</strong>, permitindo aos indivíduos enfrentar adversidades sem comprometer o seu bem-estar.` },
+        { id:28, q:"Por que é importante promover a literacia digital?", a:`Porque capacita utilizadores a <strong>navegar de forma crítica e segura</strong>, avaliando credibilidade e gerindo o <strong>tempo online</strong>. Reduz a vulnerabilidade a fraudes, ataques e desinformação, e promove <strong>comportamentos éticos</strong>.` },
+        { id:29, q:"Quais estratégias são eficazes na prevenção de distúrbios associados ao uso digital?", a:`Promoção de hábitos saudáveis: <strong>limitação do tempo de uso, horários específicos e espaços sem tecnologia</strong> (equilíbrio online/offline). Educação sobre os riscos (dependência, fadiga mental) e a importância da <strong>intervenção precoce</strong>.` },
+        { id:30, q:"Quais são as implicações psicológicas do uso de realidade aumentada no dia-a-dia?", a:`Pode enriquecer a aprendizagem, mas o uso prolongado causa <strong>confusão sensorial e sobrecarga cognitiva</strong>. O uso intensivo interfere com interações humanas levando ao <strong>isolamento social</strong>. Psicólogos ajudam a minimizar estes efeitos adversos.` },
+        { id:31, q:"Quais são as tendências futuras na Psicologia da transição digital?", a:`Uso de IA e <strong>Big Data</strong> para prever comportamentos, desenvolvimento de intervenções online para saúde mental, e maior preocupação na definição de <strong>diretrizes éticas</strong>. Crescimento do uso de <strong>RV e RA como ferramentas terapêuticas</strong>.` },
+        { id:32, q:"Quais são os benefícios e os perigos psicológicos da gamificação em ambientes digitais?", a:`Benefícios: aumenta a <strong>motivação, engajamento e aprendizagem</strong> pelo sentimento de progresso. Perigos: risco de gerar <strong>dependência, fadiga ou competitividade excessiva e stress</strong>, devido ao reforço constante e mal projetado.` },
+        { id:33, q:"Quais são os desafios éticos apresentados pela Inteligência Artificial?", a:`Proteção da privacidade, consentimento informado e <strong>prevenção de vieses algorítmicos</strong> (evitar discriminação). Levanta questões sobre a <strong>autonomia humana</strong>. Psicólogos ajudam a desenvolver diretrizes para uma IA <strong>responsável e transparente</strong>.` },
+        { id:34, q:"Quais são os desafios psicológicos impostos pelo trabalho remoto e como superá-los?", a:`Desafios: <strong>isolamento social, aumento de stress e dificuldade de equilíbrio</strong>. Soluções: desenvolvimento de <strong>rotinas de autocuidado, estabelecimento de limites claros e atividades de socialização online</strong>.` },
+        { id:35, q:"Quais são os principais desafios comportamentais na era digital?", a:`A <strong>gestão da privacidade, a superação da distração e a multitarefa</strong>. As plataformas geram perda de foco. O desafio é criar <strong>limites de uso, autocontrolo</strong> e manter o equilíbrio entre vida digital e offline.` },
+        { id:36, q:"Quais são os riscos psicológicos associados ao uso excessivo de tecnologias digitais?", a:`Ansiedade, depressão, <strong>fadiga mental, isolamento social e burnout digital</strong>. A autoestima é afetada pela <strong>comparação social</strong> e há distúrbios de sono causados pela <strong>luz azul</strong>. Exige estratégias de autocontrolo.` },
+        { id:37, q:"Qual a importância da literacia digital e qual o papel dos psicólogos nesta área?", a:`Essencial para navegar sem cair em <strong>fraudes, desinformação ou falhas de privacidade</strong>. Psicólogos desenvolvem programas para que os indivíduos aprendam a avaliar fontes e a reconhecer <strong>comportamentos manipulativos</strong>.` },
+        { id:38, q:"Qual a importância do envolvimento comunitário em ambientes digitais?", a:`Cria espaços inclusivos e seguros, gerando <strong>solidariedade e apoio mútuo</strong>. Combate o isolamento social, o cyberbullying e a desinformação, valorizando uma cultura de <strong>civismo e respeito mútuo</strong>.` },
+        { id:39, q:"Qual a relevância da ética no desenvolvimento de sistemas de IA que afetam o comportamento humano?", a:`Crucial porque a IA influencia decisões e valores. É vital respeitar a <strong>privacidade, evitar discriminação e proteger a autonomia</strong>. A <strong>transparência e o consentimento informado</strong> evitam a manipulação dos utilizadores.` },
+        { id:40, q:"Qual é a importância da análise psicológica das arquiteturas digitais?", a:`Entender como o design (usabilidade e <strong>estratégias persuasivas</strong>, como notificações) molda as decisões. É vital avaliar se induzem comportamentos saudáveis ou <strong>dependência e frustração (ex: necessidade de validação nas redes sociais)</strong>.` },
+        { id:41, q:"Qual é a relação entre o uso das redes sociais e o aumento da ansiedade e depressão?", a:`O uso excessivo gera <strong>comparação social negativa</strong>, reduzindo a autoestima. A busca por feedback imediato ("gostos") gera uma <strong>dependência de validação externa e instabilidade emocional</strong>.` },
+        { id:42, q:"Qual é o papel da Psicologia na cibersegurança?", a:`Estuda as motivações pelas quais os utilizadores adotam <strong>comportamentos de risco ou ignoram a segurança (ex: phishing)</strong>. Desenvolve formação para promover <strong>comportamentos seguros e resilientes</strong>, minimizando o erro humano.` },
+        { id:43, q:"Qual o impacto das arquiteturas digitais manipulativas na autonomia dos utilizadores?", a:`Uso de <strong>dark patterns</strong> afeta decisões subliminarmente, induzindo ações impulsivas sem consentimento pleno. A Psicologia ajuda a identificar isto, exigindo interfaces que protejam escolhas <strong>informadas e éticas</strong>.` },
+        { id:44, q:"Qual o impacto das redes sociais na identidade e interações sociais?", a:`Facilitam a criação de comunidades, mas induzem <strong>comparação social negativa</strong>, ansiedade e isolamento. As interações tendem a ser mais <strong>superficiais</strong>, afetando a qualidade e a profundidade das relações humanas.` },
+        { id:45, q:"Qual o impacto das tecnologias digitais na educação?", a:`Permitem <strong>personalização e ensino autónomo</strong>, mas trazem desafios como <strong>distração e desigualdade de acesso</strong>. A <strong>literacia digital</strong> é essencial para alunos e professores as usarem de forma eficaz.` },
+        { id:46, q:"Qual o impacto das tecnologias digitais no desenvolvimento de competências sociais em crianças?", a:`Ajudam na comunicação online, mas o uso excessivo reduz as <strong>interações face a face</strong>, que são críticas para desenvolver <strong>empatia, comunicação não verbal e resolução de conflitos</strong>.` },
+        { id:47, q:"Qual o papel da Psicologia na análise do impacto psicológico das campanhas de desinformação online?", a:`A desinformação gera ansiedade e altera a perceção. Psicólogos identificam fatores de <strong>vulnerabilidade à manipulação</strong> e desenvolvem intervenções de <strong>pensamento crítico e resiliência cognitiva</strong>.` },
+        { id:48, q:"Qual o papel da Psicologia na prevenção do cyberbullying?", a:`Compreender as dinâmicas psicológicas para criar programas de sensibilização escolar e familiar. Foca-se em promover a <strong>empatia, respeito e regulação emocional</strong>, e oferece <strong>apoio psicológico a vítimas e perpetradores</strong>.` },
+        { id:49, q:"Qual o papel da Psicologia no combate à desinformação?", a:`Estudando mecanismos como os <strong>preconceitos cognitivos (viés de confirmação)</strong> que fazem as pessoas acreditar em fake news. Promove campanhas baseadas na <strong>literacia digital e verificação de fontes</strong>.` },
+        { id:50, q:"Qual o papel dos psicólogos na adaptação a novas tecnologias?", a:`Avaliando fatores de resistência como o <strong>medo da mudança e stress tecnológico</strong>. Desenvolvem estratégias de suporte emocional para promover a <strong>autoeficácia</strong> e uma integração e transição saudáveis.` },
+    ];
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let isFlipped = false;
+    let reviewQuestions = [];
+    let previousQuestionSetKey = "";
+
+    const QUESTION_POOL_SIZE = 50;
+    const QUIZ_SIZE = 10;
+
+    // Função para baralhar arrays (Algoritmo de Fisher-Yates)
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function buildQuestionPool() {
+        const uniqueQuestions = [];
+        const seenIds = new Set();
+
+        for (const item of BANK) {
+            if (!seenIds.has(item.id)) {
+                uniqueQuestions.push(item);
+                seenIds.add(item.id);
+            }
+            if (uniqueQuestions.length === QUESTION_POOL_SIZE) {
+                break;
+            }
+        }
+
+        return uniqueQuestions;
+    }
+
+    function getQuestionSetKey(questions) {
+        return questions
+            .map(item => item.id)
+            .sort((a, b) => a - b)
+            .join("-");
+    }
+
+    function pickRandomQuestions(questionPool) {
+        let picked = [];
+        let pickedKey = "";
+        let attempts = 0;
+
+        do {
+            picked = shuffleArray([...questionPool]).slice(0, QUIZ_SIZE);
+            pickedKey = getQuestionSetKey(picked);
+            attempts++;
+        } while (
+            questionPool.length > QUIZ_SIZE &&
+            pickedKey === previousQuestionSetKey &&
+            attempts < 30
+        );
+
+        previousQuestionSetKey = pickedKey;
+        return picked;
+    }
+
+    function startQuiz() {
+        const questionPool = buildQuestionPool();
+        if (questionPool.length < QUESTION_POOL_SIZE) {
+            console.error(`O quiz precisa de ${QUESTION_POOL_SIZE} perguntas unicas no banco para cumprir o modo atual.`);
+            return;
+        }
+
+        // Escolher 10 sem repeticao dentro de um leque fixo de 50 perguntas.
+        currentQuestions = pickRandomQuestions(questionPool);
+        currentIndex = 0;
+        score = 0;
+        reviewQuestions = [];
+
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'block';
+        document.getElementById('progress-text').style.display = 'block';
+        document.getElementById('card-scene').style.display = 'block';
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('review-screen').style.display = 'none';
+        
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        isFlipped = false;
+        const card = document.getElementById('flashcard');
+        card.classList.remove('is-flipped');
+        
+        // Esconder botões de avaliação
+        document.getElementById('assessment-ui').style.display = 'none';
+
+        // Atualizar barra de progresso
+        document.getElementById('progress-text').innerText = `Pergunta ${currentIndex + 1} de ${QUIZ_SIZE}`;
+        document.getElementById('progress-bar').style.width = `${((currentIndex) / QUIZ_SIZE) * 100}%`;
+
+        // Carregar textos
+        document.getElementById('question-text').innerHTML = currentQuestions[currentIndex].q;
+        document.getElementById('answer-text').innerHTML = currentQuestions[currentIndex].a;
+    }
+
+    function flipCard() {
+        if (!isFlipped) {
+            document.getElementById('flashcard').classList.add('is-flipped');
+            isFlipped = true;
+            
+            // Mostrar botões passado um pouco para a animação decorrer
+            setTimeout(() => {
+                document.getElementById('assessment-ui').style.display = 'flex';
+            }, 300);
+        }
+    }
+
+    function recordAnswer(points) {
+        const activeQuestion = currentQuestions[currentIndex];
+        if (points < 2) {
+            reviewQuestions.push(activeQuestion);
+        }
+
+        score += points;
+        currentIndex++;
+
+        if (currentIndex < QUIZ_SIZE) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }
+
+    function showResults() {
+        document.getElementById('card-scene').style.display = 'none';
+        document.getElementById('assessment-ui').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+        document.getElementById('progress-text').style.display = 'none';
+        document.getElementById('review-screen').style.display = 'none';
+        
+        const resultScreen = document.getElementById('result-screen');
+        resultScreen.style.display = 'block';
+        
+        document.getElementById('final-score').innerText = score;
+
+        let feedback = "";
+        if (score >= 18) {
+            feedback = "<strong>Excelente!</strong> Dominas claramente as intersecções entre Psicologia e o ambiente digital. Estás super preparado(a) para o teste.";
+        } else if (score >= 14) {
+            feedback = "<strong>Muito Bom!</strong> Tens uma base teórica forte. Revê apenas os cartões onde tiveste pequenas dúvidas.";
+        } else if (score >= 10) {
+            feedback = "<strong>Suficiente.</strong> Tens noção geral dos conceitos, mas precisas de fixar melhor as palavras-chave destacadas a negrito nas respostas.";
+        } else {
+            feedback = "<strong>Atenção!</strong> Este quiz mostrou que precisas de investir mais tempo de estudo na compreensão e retenção dos conceitos de ética, cognição e arquitetura digital.";
+        }
+
+        document.getElementById('feedback-message').innerHTML = feedback;
+
+        const reviewCount = reviewQuestions.length;
+        const reviewCallout = document.getElementById('review-callout');
+        const cleanSheet = document.getElementById('clean-sheet');
+
+        if (reviewCount > 0) {
+            reviewCallout.style.display = 'block';
+            cleanSheet.style.display = 'none';
+            document.getElementById('review-count').innerText = `${reviewCount} ${reviewCount === 1 ? 'questao para rever' : 'questoes para rever'}`;
+
+            let reviewMessage = "";
+            if (reviewCount <= 2) {
+                reviewMessage = "Estas muito perto do nivel maximo. Uma revisao curta agora deve transformar estas duvidas em acertos.";
+            } else if (reviewCount <= 5) {
+                reviewMessage = "Bom trabalho ate aqui. Rever estes pontos agora vai aumentar muito a tua confianca para o teste.";
+            } else {
+                reviewMessage = "Sem pressao: cada ponto revisto e uma vitoria. Faz esta revisao por blocos e vais notar progresso real.";
+            }
+            document.getElementById('review-message').innerText = reviewMessage;
+        } else {
+            reviewCallout.style.display = 'none';
+            cleanSheet.style.display = 'block';
+        }
+    }
+
+    function openReview() {
+        if (!reviewQuestions.length) {
+            return;
+        }
+
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('review-screen').style.display = 'block';
+        renderReviewQuestions();
+    }
+
+    function backToResults() {
+        document.getElementById('review-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+    }
+
+    function renderReviewQuestions() {
+        const reviewCount = reviewQuestions.length;
+        const reviewSubtitle = document.getElementById('review-subtitle');
+        const reviewList = document.getElementById('review-list');
+
+        reviewSubtitle.innerText = reviewCount === 1
+            ? "Tens 1 ponto para reforcar. Faz esta revisao e fecha o treino em grande."
+            : `Tens ${reviewCount} pontos para reforcar. Vai pergunta a pergunta e celebra cada acerto mental.`;
+
+        reviewList.innerHTML = reviewQuestions.map((item, index) => `
+            <article class="review-card">
+                <div class="review-card-head">
+                    <span class="review-index">Rever ${index + 1}</span>
+                    <span class="review-pill">Reforco rapido</span>
+                </div>
+                <h3>${item.q}</h3>
+                <p>${item.a}</p>
+                <p class="review-note">Respira fundo, rele os conceitos-chave e repete com as tuas palavras. Esta pergunta pode virar acerto no proximo teste.</p>
+            </article>
+        `).join('');
+    }
+</script>
+
+</body>
+</html>
